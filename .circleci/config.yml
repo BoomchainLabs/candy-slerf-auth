@@ -1,0 +1,40 @@
+version: 2.1
+
+executors:
+  go-executor:
+    docker:
+      - image: cimg/go:1.21
+    working_directory: ~/repo
+
+jobs:
+  build-test:
+    executor: go-executor
+    steps:
+      - checkout
+
+      - run:
+          name: Tidy Go Modules
+          command: go mod tidy
+
+      - run:
+          name: Build Plugin
+          command: go build -v ./...
+
+      - run:
+          name: Vet Go Code
+          command: go vet ./...
+
+      - run:
+          name: Run Unit Tests
+          command: |
+            if ls *_test.go > /dev/null 2>&1; then
+              go test -v ./...
+            else
+              echo "No *_test.go files found – skipping tests"
+            fi
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build-test
